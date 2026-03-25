@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Attempt Detail{% endblock %}
+{% block page_title %}Attempt Review{% endblock %}
+
+{% block content %}
+{% set name = (student.StudentName or student.Name or attempt.StudentID) if student else attempt.StudentID %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ name }}</div>
+    <div class="text-muted text-sm mt-1">
+      {{ attempt.PassageCode }} · {{ attempt.Date[:16] if attempt.Date else '' }}
+      · Attempt ID: <code style="font-size:11px">{{ attempt.AttemptID }}</code>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    {% if student %}
+    <a href="{{ url_for('admin.student_profile', student_id=attempt.StudentID) }}" class="btn btn-outline">← Student</a>
+    {% endif %}
+    <a href="{{ url_for('admin.attempts_list') }}" class="btn btn-outline">All Attempts</a>
+  </div>
+</div>
+
+<div class="three-col">
+  <!-- Error breakdown -->
+  <div class="card" style="grid-column:span 2">
+    <div class="card-header">
+      <div class="card-title">Error Breakdown</div>
+      {% set e = attempt.ErrorPercent|float %}
+      <span class="badge {% if e <= 5 %}badge-pass{% elif e <= 10 %}badge-mid{% else %}badge-fail{% endif %}" style="font-size:13px;padding:4px 12px">
+        {{ e }}% Total Errors
+      </span>
+    </div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+        {% set fields = [
+          ('Full Mistakes',   attempt.FullMistakes,    '#ef4444'),
+          ('Half Mistakes',   attempt.HalfMistakes,    '#f97316'),
+          ('Omissions',       attempt.Omissions,       '#a855f7'),
+          ('Extra Words',     attempt.ExtraWords,       '#3b82f6'),
+          ('Capitalisation',  attempt.Capitalization,  '#10b981'),
+          ('Full Stop',       attempt.FullStop,        '#eab308'),
+          ('Total Errors',    attempt.TotalErrors,     'var(--accent)'),
+          ('WPM',             attempt.WPM,             'var(--text)'),
+        ] %}
+        {% for label, val, color in fields %}
+        <div style="background:var(--table-stripe);border:1px solid var(--table-border);border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">{{ label }}</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:{{ color }}">{{ val }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="display:flex;gap:16px;font-size:13px;color:var(--text-muted)">
+        <span>⏱ Time: {{ attempt.TimeTaken }}s</span>
+        <span>📝 Words typed: {{ attempt.TypedWords }}</span>
+        <span>🖥 {{ attempt.Mode }} · {{ attempt.DeviceID }}</span>
+      </div>
+      {% if attempt.AdminNote %}
+      <div style="margin-top:14px;padding:10px 14px;background:var(--warning-light);border-radius:8px;font-size:13px;color:var(--warning)">
+        📌 Admin Note: {{ attempt.AdminNote }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Correction panel -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">✏️ Manual Correction</div></div>
+    <div class="card-body">
+      <p class="text-muted text-sm" style="margin-bottom:14px">Override auto-evaluated scores if needed. Total Errors and Error% will be recalculated automatically.</p>
+
+      <div class="form-group">
+        <label class="form-label">FULL MISTAKES</label>
+        <input type="number" class="form-control form-control-sm" id="c_full" value="{{ attempt.FullMistakes }}" min="0" step="1" oninput="recalcTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">HALF MISTAKES</label>
+        <input type="number" class="form-control form-control-sm" id="c_half" value="{{ attempt.HalfMistakes }}" min="0" step="0.5" oninput="recalcTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">OMISSIONS</label>
+        <input type="number" class="form-control form-control-sm" id="c_omission" value="{{ attempt.Omissions }}" min="0" step="1" oninput="recalcTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">EXTRA WORDS</label>
+        <input type="number" class="form-control form-control-sm" id="c_extra" value="{{ attempt.ExtraWords }}" min="0" step="1" oninput="recalcTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">CAPITALISATION</label>
+        <input type="number" class="form-control form-control-sm" id="c_cap" value="{{ attempt.Capitalization }}" min="0" step="0.5" oninput="recalcTotal()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">FULL STOP</label>
+        <input type="number" class="form-control form-control-sm" id="c_fs" value="{{ attempt.FullStop }}" min="0" step="0.5" oninput="recalcTotal()">
+      </div>
+
+      <div style="background:var(--accent-light);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:13px">
+        <strong>New Total:</strong> <span id="new_total">{{ attempt.TotalErrors }}</span> errors
+        &nbsp;·&nbsp; <span id="new_pct">{{ attempt.ErrorPercent }}</span>%
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ADMIN NOTE</label>
+        <textarea class="form-control form-control-sm" id="c_note" rows="2" placeholder="Optional note about this correction…">{{ attempt.AdminNote or '' }}</textarea>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="saveCorrection()">Save Correction</button>
+    </div>
+  </div>
+</div>
+
+<!-- Annotated Passage -->
+{% if attempt.HighlightedPassage %}
+<div class="card">
+  <div class="card-header"><div class="card-title">Annotated Passage</div></div>
+  <div class="card-body">
+    <!-- Legend -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;font-size:12px">
+      <span style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:2px 8px">Full Mistake</span>
+      <span style="background:#fff7ed;color:#9a3412;border:1px solid #fdba74;border-radius:4px;padding:2px 8px">Half / Spelling</span>
+      <span style="background:#f3e8ff;color:#6b21a8;border:1px solid #c084fc;border-radius:4px;padding:2px 8px;font-style:italic">[Omission]</span>
+      <span style="background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;border-radius:4px;padding:2px 8px">Extra Word</span>
+      <span style="background:#ecfdf5;color:#065f46;border:1px solid #6ee7b7;border-radius:4px;padding:2px 8px">Capitalisation</span>
+      <span style="background:#fef9c3;color:#713f12;border:1px solid #fde047;border-radius:4px;padding:2px 8px">Full Stop</span>
+      <span style="background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:4px;padding:2px 8px">✓ Variant</span>
+    </div>
+    <div style="font-family:'Courier Prime',monospace;font-size:15px;line-height:2;color:var(--text)">
+      {{ attempt.HighlightedPassage | safe }}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const typedWords = {{ attempt.TypedWords or 100 }};
+
+function recalcTotal() {
+  const full = parseFloat(document.getElementById('c_full').value) || 0;
+  const half = parseFloat(document.getElementById('c_half').value) || 0;
+  const omit = parseFloat(document.getElementById('c_omission').value) || 0;
+  const extr = parseFloat(document.getElementById('c_extra').value) || 0;
+  const cap  = parseFloat(document.getElementById('c_cap').value) || 0;
+  const fs   = parseFloat(document.getElementById('c_fs').value) || 0;
+  const total = full + half + omit + extr + cap + fs;
+  const pct   = (total / (typedWords || 1) * 100).toFixed(2);
+  document.getElementById('new_total').textContent = total;
+  document.getElementById('new_pct').textContent = pct;
+}
+
+async function saveCorrection() {
+  const payload = {
+    full:          parseFloat(document.getElementById('c_full').value)     || 0,
+    half:          parseFloat(document.getElementById('c_half').value)     || 0,
+    omission:      parseFloat(document.getElementById('c_omission').value) || 0,
+    extra:         parseFloat(document.getElementById('c_extra').value)    || 0,
+    capitalization:parseFloat(document.getElementById('c_cap').value)      || 0,
+    fullstop:      parseFloat(document.getElementById('c_fs').value)       || 0,
+    note:          document.getElementById('c_note').value,
+  };
+  const r = await api("{{ url_for('admin.correct_attempt', attempt_id=attempt.AttemptID) }}", payload);
+  if (r.status === 'ok') {
+    showToast('Correction saved! New total: ' + r.new_total + ' (' + r.new_pct + '%)');
+  } else {
+    showToast(r.message || 'Save failed', 'error');
+  }
+}
+</script>
+
+<!-- Highlight CSS (same as result.html) -->
+<style>
+.highlight { border-radius: 3px; padding: 1px 4px; font-size: .92em; }
+.highlight.full      { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+.highlight.half      { background:#fff7ed; color:#9a3412; border:1px solid #fdba74; }
+.highlight.omission  { background:#f3e8ff; color:#6b21a8; border:1px solid #c084fc; font-style:italic; }
+.highlight.extra     { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+.highlight.capital   { background:#ecfdf5; color:#065f46; border:1px solid #6ee7b7; }
+.highlight.fullstop  { background:#fef9c3; color:#713f12; border:1px solid #fde047; }
+.highlight.variant   { background:#f0fdf4; color:#166534; border:1px solid #86efac; }
+.highlight em        { font-size:.82em; opacity:.75; }
+[data-theme="dark"] .highlight.full     { background:rgba(239,68,68,.18); color:#fca5a5; border-color:rgba(239,68,68,.4); }
+[data-theme="dark"] .highlight.half     { background:rgba(249,115,22,.18);color:#fdba74; border-color:rgba(249,115,22,.4); }
+[data-theme="dark"] .highlight.omission { background:rgba(168,85,247,.18);color:#d8b4fe; border-color:rgba(168,85,247,.4); }
+[data-theme="dark"] .highlight.extra    { background:rgba(59,130,246,.18); color:#93c5fd; border-color:rgba(59,130,246,.4); }
+[data-theme="dark"] .highlight.capital  { background:rgba(16,185,129,.18);color:#6ee7b7; border-color:rgba(16,185,129,.4); }
+[data-theme="dark"] .highlight.fullstop { background:rgba(234,179,8,.18); color:#fde047; border-color:rgba(234,179,8,.4); }
+[data-theme="dark"] .highlight.variant  { background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.35); }
+</style>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Error{% endblock %}
+{% block page_title %}Error{% endblock %}
+{% block content %}
+<div class="card" style="max-width:500px;margin:40px auto">
+  <div class="card-body" style="text-align:center;padding:40px">
+    <div style="font-size:40px;margin-bottom:16px">⚠️</div>
+    <div style="font-size:16px;color:var(--danger);margin-bottom:12px">{{ message }}</div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary">← Dashboard</a>
+  </div>
+</div>
+{% endblock %}

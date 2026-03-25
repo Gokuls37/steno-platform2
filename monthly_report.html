@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluate — Steno Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Source+Sans+3:wght@300;400;600&family=Courier+Prime&display=swap" rel="stylesheet">
+<style>
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+[data-theme="light"] {
+  --bg:           #f0f2f8;
+  --sidebar-bg:   #1a1f36;
+  --sidebar-text: rgba(255,255,255,.7);
+  --sidebar-active: #ffffff;
+  --sidebar-active-bg: rgba(255,255,255,.12);
+  --sidebar-hover-bg:  rgba(255,255,255,.07);
+  --topbar-bg:    #ffffff;
+  --topbar-border:#e2e6f0;
+  --card-bg:      #ffffff;
+  --card-border:  #e2e6f0;
+  --text:         #1a1f36;
+  --text-muted:   #6b7280;
+  --accent:       #2563eb;
+  --accent-text:  #ffffff;
+  --accent-light: #eff6ff;
+  --danger:       #dc2626;
+  --danger-light: #fef2f2;
+  --success:      #16a34a;
+  --success-light:#f0fdf4;
+  --warning:      #d97706;
+  --warning-light:#fffbeb;
+  --table-stripe: #f8fafc;
+  --table-border: #e9ecf3;
+  --input-bg:     #ffffff;
+  --input-border: #d1d5e0;
+  --shadow:       0 2px 16px rgba(0,0,0,.07);
+  --shadow-sm:    0 1px 4px rgba(0,0,0,.06);
+  --badge-pass-bg:#dcfce7; --badge-pass-text:#166534;
+  --badge-fail-bg:#fee2e2; --badge-fail-text:#991b1b;
+  --badge-mid-bg: #fff7ed; --badge-mid-text: #9a3412;
+}
+
+[data-theme="dark"] {
+  --bg:           #0d1117;
+  --sidebar-bg:   #060a0f;
+  --sidebar-text: rgba(255,255,255,.55);
+  --sidebar-active: #f0a500;
+  --sidebar-active-bg: rgba(240,165,0,.12);
+  --sidebar-hover-bg:  rgba(255,255,255,.06);
+  --topbar-bg:    rgba(255,255,255,.03);
+  --topbar-border:rgba(255,255,255,.08);
+  --card-bg:      rgba(255,255,255,.04);
+  --card-border:  rgba(255,255,255,.09);
+  --text:         #f1f5f9;
+  --text-muted:   rgba(255,255,255,.45);
+  --accent:       #f0a500;
+  --accent-text:  #0d1117;
+  --accent-light: rgba(240,165,0,.1);
+  --danger:       #ef4444;
+  --danger-light: rgba(239,68,68,.1);
+  --success:      #22c55e;
+  --success-light:rgba(34,197,94,.1);
+  --warning:      #f59e0b;
+  --warning-light:rgba(245,158,11,.1);
+  --table-stripe: rgba(255,255,255,.02);
+  --table-border: rgba(255,255,255,.07);
+  --input-bg:     rgba(255,255,255,.06);
+  --input-border: rgba(255,255,255,.12);
+  --shadow:       none;
+  --shadow-sm:    none;
+  --badge-pass-bg:rgba(34,197,94,.15); --badge-pass-text:#4ade80;
+  --badge-fail-bg:rgba(239,68,68,.15); --badge-fail-text:#fca5a5;
+  --badge-mid-bg: rgba(245,158,11,.15);--badge-mid-text: #fbbf24;
+}
+
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+  transition: background .3s, color .3s;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: background .3s;
+}
+.sidebar-brand {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar-brand .brand-top {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2px;
+}
+.sidebar-brand .brand-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,.4);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.nav-section-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.25);
+  padding: 14px 20px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--sidebar-hover-bg); color: #fff; }
+.nav-item.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active);
+  border-left-color: var(--sidebar-active);
+  font-weight: 600;
+}
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .8; }
+.sidebar-footer {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sidebar-footer .admin-label { font-size: 12px; color: rgba(255,255,255,.4); }
+.logout-btn {
+  font-size: 12px;
+  color: rgba(255,255,255,.5);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,.15);
+  transition: all .2s;
+}
+.logout-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+
+/* ── MAIN AREA ── */
+.main-wrap {
+  margin-left: 220px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.topbar {
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--topbar-border);
+  padding: 0 28px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: .5px;
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.theme-toggle {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent;
+  border: 1px solid var(--input-border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .8px;
+  transition: all .2s;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.theme-toggle svg { width: 13px; height: 13px; }
+
+.content { padding: 24px 28px; flex: 1; }
+
+/* ── STAT CARDS ── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.stat-value.accent { color: var(--accent); }
+.stat-value.success { color: var(--success); }
+.stat-value.danger  { color: var(--danger); }
+.stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: var(--text);
+}
+.card-body { padding: 20px; }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+thead th {
+  background: var(--table-stripe);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--table-border);
+  white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--table-border); transition: background .15s; }
+tbody tr:hover { background: var(--table-stripe); }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 10px 14px; color: var(--text); vertical-align: middle; }
+tbody td.muted { color: var(--text-muted); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-pass    { background: var(--badge-pass-bg); color: var(--badge-pass-text); }
+.badge-fail    { background: var(--badge-fail-bg); color: var(--badge-fail-text); }
+.badge-mid     { background: var(--badge-mid-bg);  color: var(--badge-mid-text); }
+.badge-neutral { background: var(--table-stripe);  color: var(--text-muted); border: 1px solid var(--table-border); }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 7px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; text-decoration: none; transition: all .2s;
+}
+.btn-primary { background: var(--accent); color: var(--accent-text); }
+.btn-primary:hover { opacity: .88; }
+.btn-outline {
+  background: transparent; color: var(--text-muted);
+  border: 1px solid var(--input-border);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(220,38,38,.2); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-success { background: var(--success-light); color: var(--success); border: 1px solid rgba(22,163,74,.2); }
+.btn-success:hover { background: var(--success); color: #fff; }
+
+/* ── FORM ELEMENTS ── */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; letter-spacing: .5px; }
+.form-control {
+  width: 100%; padding: 8px 12px;
+  background: var(--input-bg); color: var(--text);
+  border: 1px solid var(--input-border); border-radius: 7px;
+  font-size: 13px; font-family: inherit;
+  transition: border-color .2s;
+}
+.form-control:focus { outline: none; border-color: var(--accent); }
+.form-control-sm { padding: 5px 10px; font-size: 12px; }
+textarea.form-control { resize: vertical; min-height: 80px; }
+select.form-control { cursor: pointer; }
+
+/* ── MISC ── */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px; font-weight: 700; color: var(--text);
+}
+.chart-wrap { position: relative; height: 220px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+@media(max-width:900px) { .two-col,.three-col { grid-template-columns: 1fr; } }
+
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  padding: 12px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  opacity: 0; pointer-events: none;
+  transform: translateY(8px);
+  transition: all .3s; z-index: 999;
+}
+.toast.show { opacity: 1; pointer-events: auto; transform: none; }
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error   { border-color: var(--danger);  color: var(--danger); }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.5); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 14px; padding: 24px; width: 480px; max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.modal-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px; font-weight: 700; color: var(--text);
+  margin-bottom: 18px;
+}
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.text-muted { color: var(--text-muted); }
+.text-sm { font-size: 12px; }
+.mt-1 { margin-top: 6px; }
+.mt-2 { margin-top: 12px; }
+.flex { display: flex; align-items: center; }
+.gap-2 { gap: 8px; }
+.ml-auto { margin-left: auto; }
+
+
+/* Evaluate-specific */
+.eval-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  align-items: start;
+}
+.passage-preview {
+  font-family: 'Courier Prime', monospace;
+  font-size: 14px;
+  line-height: 1.9;
+  background: var(--table-stripe);
+  border: 1px solid var(--table-border);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 260px;
+  overflow-y: auto;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.passage-preview.empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-family: inherit;
+  font-size: 13px;
+}
+.score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.score-box {
+  background: var(--table-stripe);
+  border: 1px solid var(--table-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  text-align: center;
+}
+.score-box .lbl {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.score-box .val {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.annotated-out {
+  font-family: 'Courier Prime', monospace;
+  font-size: 15px;
+  line-height: 2.2;
+  background: var(--table-stripe);
+  border: 1px solid var(--table-border);
+  border-radius: 8px;
+  padding: 18px;
+  min-height: 120px;
+  color: var(--text);
+}
+.result-panel { display: none; }
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid var(--card-border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Highlight colours */
+.highlight { border-radius: 3px; padding: 1px 5px; font-size: .92em; }
+.highlight.full     { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+.highlight.half     { background:#fff7ed; color:#9a3412; border:1px solid #fdba74; }
+.highlight.omission { background:#f3e8ff; color:#6b21a8; border:1px solid #c084fc; font-style:italic; }
+.highlight.extra    { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+.highlight.capital  { background:#ecfdf5; color:#065f46; border:1px solid #6ee7b7; }
+.highlight.fullstop { background:#fef9c3; color:#713f12; border:1px solid #fde047; }
+.highlight.variant  { background:#f0fdf4; color:#166534; border:1px solid #86efac; }
+.highlight em       { font-size:.82em; opacity:.75; }
+[data-theme="dark"] .highlight.full     { background:rgba(239,68,68,.18); color:#fca5a5; border-color:rgba(239,68,68,.4); }
+[data-theme="dark"] .highlight.half     { background:rgba(249,115,22,.18);color:#fdba74; border-color:rgba(249,115,22,.4); }
+[data-theme="dark"] .highlight.omission { background:rgba(168,85,247,.18);color:#d8b4fe; border-color:rgba(168,85,247,.4); }
+[data-theme="dark"] .highlight.extra    { background:rgba(59,130,246,.18); color:#93c5fd; border-color:rgba(59,130,246,.4); }
+[data-theme="dark"] .highlight.capital  { background:rgba(16,185,129,.18);color:#6ee7b7; border-color:rgba(16,185,129,.4); }
+[data-theme="dark"] .highlight.fullstop { background:rgba(234,179,8,.18); color:#fde047; border-color:rgba(234,179,8,.4); }
+[data-theme="dark"] .highlight.variant  { background:rgba(34,197,94,.15); color:#4ade80; border-color:rgba(34,197,94,.35); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-top">Steno · ADMIN</div>
+    <div class="brand-sub">Steno Portal Control</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a href="{{ url_for('admin.dashboard') }}"
+       class="nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-section-label">Students</div>
+    <a href="{{ url_for('admin.students') }}"
+       class="nav-item {% if 'students' in request.endpoint %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      All Students
+    </a>
+    <div class="nav-section-label">Tests</div>
+    <a href="{{ url_for('admin.attempts_list') }}"
+       class="nav-item {% if 'attempt' in request.endpoint %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      All Attempts
+    </a>
+    <div class="nav-section-label">Content</div>
+    <a href="{{ url_for('admin.passages') }}"
+       class="nav-item {% if 'passage' in request.endpoint %}active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Passages
+    </a>
+    <div class="nav-section-label">Tools</div>
+    <a href="/admin/evaluate" class="nav-item" id="nav-evaluate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+      Evaluate Text
+    </a>
+    <div class="nav-section-label">Portal</div>
+    <a href="/" target="_blank" class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Open Portal
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="admin-label">Admin</span>
+    <a href="{{ url_for('admin.logout') }}" class="logout-btn">Logout</a>
+  </div>
+</aside>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="topbar-title">Evaluate Student Text</div>
+    <div class="topbar-right">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span id="themeLabel">Dark</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="eval-layout">
+
+      <!-- LEFT: Input Panel -->
+      <div>
+        <!-- Step 1: Passage -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div class="card-title">① Passage</div></div>
+          <div class="card-body">
+            <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
+              <div style="flex:1">
+                <label class="form-label">PASSAGE CODE</label>
+                <input type="text" class="form-control" id="passage_code"
+                       placeholder="e.g. pr1964" oninput="clearPassage()">
+              </div>
+              <button class="btn btn-primary" onclick="loadPassage()">Load</button>
+            </div>
+            <div id="passage_preview" class="passage-preview empty">
+              Passage text will appear here after loading…
+            </div>
+            <div id="passage_meta" style="margin-top:8px;font-size:12px;color:var(--text-muted);display:none">
+              <span id="passage_name"></span> · <strong id="passage_wc"></strong> words
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Student Text -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title">② Student's Typed Text</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm" onclick="document.getElementById('typed_text').value='';updateCount()">Clear</button>
+              <button class="btn btn-outline btn-sm" onclick="pasteClipboard()">📋 Paste</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <textarea class="form-control" id="typed_text" rows="9"
+              style="font-family:'Courier Prime',monospace;font-size:14px;line-height:1.7;resize:vertical"
+              placeholder="Paste the student's typed transcription here…"
+              oninput="updateCount()"></textarea>
+            <div style="margin-top:6px;font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between">
+              <span id="word_count">0 words typed</span>
+              <span id="char_count">0 chars</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evaluate button -->
+        <button class="btn btn-primary" id="evalBtn"
+          style="width:100%;padding:13px;font-size:15px;letter-spacing:1px"
+          onclick="runEval()">
+          ▶ &nbsp;EVALUATE
+        </button>
+      </div>
+
+      <!-- RIGHT: Results Panel -->
+      <div>
+        <div class="card result-panel" id="result_panel">
+          <div class="card-header">
+            <div class="card-title">📊 Result</div>
+            <span id="pass_badge" class="badge" style="font-size:13px;padding:4px 12px"></span>
+          </div>
+          <div class="card-body">
+            <div class="score-grid">
+              <div class="score-box" style="grid-column:span 2;background:var(--accent-light)">
+                <div class="lbl">Error %</div>
+                <div class="val" id="r_pct" style="font-size:36px;color:var(--accent)">—</div>
+              </div>
+              <div class="score-box">
+                <div class="lbl">WPM</div>
+                <div class="val" id="r_wpm">—</div>
+              </div>
+              <div class="score-box">
+                <div class="lbl">Total Errors</div>
+                <div class="val" id="r_total">—</div>
+              </div>
+              <div class="score-box">
+                <div class="lbl">Full</div>
+                <div class="val" id="r_full" style="color:#ef4444">—</div>
+              </div>
+              <div class="score-box">
+                <div class="lbl">Half</div>
+                <div class="val" id="r_half" style="color:#f97316">—</div>
+              </div>
+              <div class="score-box">
+                <div class="lbl">Omissions</div>
+                <div class="val" id="r_omit" style="color:#a855f7">—</div>
+              </div>
+              <div class="score-box">
+                <div class="lbl">Extra</div>
+                <div class="val" id="r_extra" style="color:#3b82f6">—</div>
+              </div>
+              <div class="score-box">
+                <div class="lbl">Capital</div>
+                <div class="val" id="r_cap" style="color:#10b981">—</div>
+              </div>
+              <div class="score-box">
+                <div class="lbl">Full Stop</div>
+                <div class="val" id="r_fs" style="color:#eab308">—</div>
+              </div>
+            </div>
+
+            <!-- Save to student record -->
+            <div style="border-top:1px solid var(--card-border);padding-top:14px;margin-top:4px">
+              <div class="form-label" style="margin-bottom:8px">SAVE TO STUDENT RECORD (optional)</div>
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <input type="text" class="form-control form-control-sm" id="save_student_id"
+                       placeholder="Student ID e.g. STN001">
+                <input type="number" class="form-control form-control-sm" id="save_time"
+                       placeholder="Time (sec)" style="width:110px">
+              </div>
+              <button class="btn btn-success" style="width:100%" onclick="saveResult()">
+                💾 Save to Records
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- placeholder before eval -->
+        <div id="result_placeholder" class="card">
+          <div class="card-body" style="text-align:center;padding:40px 20px;color:var(--text-muted)">
+            <div style="font-size:48px;margin-bottom:12px">📋</div>
+            <div style="font-size:14px">Load a passage, paste the<br>student text, then click Evaluate</div>
+          </div>
+        </div>
+
+        <!-- Colour legend -->
+        <div class="card" style="margin-top:16px">
+          <div class="card-body" style="padding:14px 16px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text-muted);margin-bottom:10px">COLOUR GUIDE</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px">
+              <span class="highlight full">Full Mistake</span>
+              <span class="highlight half">Half / Spelling</span>
+              <span class="highlight omission">[Omission]</span>
+              <span class="highlight extra">Extra Word</span>
+              <span class="highlight capital">Capitalisation</span>
+              <span class="highlight fullstop">Full Stop</span>
+              <span class="highlight variant">✓ Variant</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Annotated Passage — full width below -->
+    <input type="hidden" id="ann-wordcount" value="100">
+<div class="card result-panel" id="annotated_card" style="margin-top:20px">
+      <div class="card-header">
+        <div class="card-title">Annotated Passage</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:11px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;padding:2px 10px;font-weight:600">✏️ Click any word to edit</span>
+          <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="annotated-out" id="annotated_out" style="cursor:default"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main-wrap -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Theme
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeLabel').textContent = t === 'dark' ? 'Light' : 'Dark';
+  const icon = document.getElementById('themeIcon');
+  icon.innerHTML = t === 'dark'
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const nxt = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('ssc-admin-theme', nxt);
+  applyTheme(nxt);
+}
+const saved = localStorage.getItem('ssc-admin-theme') || 'light';
+applyTheme(saved);
+
+
+// Toast
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+
+// API helper
+async function api(url, data) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+  return r.json();
+}
+
+// Mark nav item active
+document.getElementById('nav-evaluate') && 
+  document.getElementById('nav-evaluate').classList.add('active');
+
+// ── Passage load ──────────────────────────────────────────────────────────────
+let _passage = null;
+
+function clearPassage() {
+  _passage = null;
+  document.getElementById('passage_preview').textContent = 'Passage text will appear here after loading…';
+  document.getElementById('passage_preview').className = 'passage-preview empty';
+  document.getElementById('passage_meta').style.display = 'none';
+}
+
+async function loadPassage() {
+  const code = document.getElementById('passage_code').value.trim();
+  if (!code) { showToast('Enter a passage code', 'error'); return; }
+  const r = await fetch('/admin/get-passage?code=' + encodeURIComponent(code));
+  const data = await r.json();
+  if (data.status !== 'ok') { showToast(data.message || 'Passage not found', 'error'); return; }
+  _passage = data;
+  const preview = document.getElementById('passage_preview');
+  preview.textContent = data.text;
+  preview.className = 'passage-preview';
+  document.getElementById('passage_name').textContent = data.name;
+  document.getElementById('passage_wc').textContent = data.word_count;
+  document.getElementById('passage_meta').style.display = 'block';
+  showToast('Passage loaded — ' + data.word_count + ' words');
+}
+
+// ── Word / char count ─────────────────────────────────────────────────────────
+function updateCount() {
+  const t = document.getElementById('typed_text').value;
+  const words = t.trim() ? t.trim().split(/\s+/).length : 0;
+  document.getElementById('word_count').textContent = words + ' words typed';
+  document.getElementById('char_count').textContent = t.length + ' chars';
+}
+
+async function pasteClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('typed_text').value = text;
+    updateCount();
+    showToast('Pasted from clipboard');
+  } catch(e) {
+    showToast('Allow clipboard access or paste manually', 'error');
+  }
+}
+
+// ── Evaluate ──────────────────────────────────────────────────────────────────
+let _lastResult = null;
+
+async function runEval() {
+  if (!_passage) { showToast('Load a passage first', 'error'); return; }
+  const typed = document.getElementById('typed_text').value.trim();
+  if (!typed)  { showToast('Paste the student text first', 'error'); return; }
+
+  const btn = document.getElementById('evalBtn');
+  btn.innerHTML = '<span class="spinner"></span> Evaluating…';
+  btn.disabled = true;
+
+  try {
+    const r = await fetch('/admin/quick-eval', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        passage_code: _passage.code,
+        typed_text: typed
+      })
+    });
+    const data = await r.json();
+    if (data.status !== 'ok') { showToast(data.message || 'Error', 'error'); return; }
+
+    _lastResult = data;
+
+    // Fill scores
+    const pct = parseFloat(data.error_pct);
+    document.getElementById('r_pct').textContent   = pct + '%';
+    document.getElementById('r_wpm').textContent   = data.wpm;
+    document.getElementById('r_total').textContent = data.total;
+    document.getElementById('r_full').textContent  = data.full;
+    document.getElementById('r_half').textContent  = data.half;
+    document.getElementById('r_omit').textContent  = data.omission;
+    document.getElementById('r_extra').textContent = data.extra;
+    document.getElementById('r_cap').textContent   = data.cap;
+    document.getElementById('r_fs').textContent    = data.fullstop;
+
+    const badge = document.getElementById('pass_badge');
+    if (pct <= 5)       { badge.className='badge badge-pass'; badge.textContent='PASS'; }
+    else if (pct <= 10) { badge.className='badge badge-mid';  badge.textContent='BORDERLINE'; }
+    else                { badge.className='badge badge-fail'; badge.textContent='FAIL'; }
+
+    // Annotated passage
+    document.getElementById('annotated_out').innerHTML = data.highlighted;
+    // Init interactive annotation on the eval result
+    document.getElementById('ann-wordcount') && 
+      (document.getElementById('ann-wordcount').value = _passage.word_count);
+    setTimeout(initEvalAnnotation, 50);
+
+    // Show result panels
+    document.querySelectorAll('.result-panel').forEach(el => el.style.display = 'block');
+    document.getElementById('result_placeholder').style.display = 'none';
+
+    showToast('Evaluation complete!');
+  } catch(e) {
+    showToast('Server error: ' + e, 'error');
+  } finally {
+    btn.innerHTML = '▶ &nbsp;EVALUATE';
+    btn.disabled = false;
+  }
+}
+
+// ── Save to student record ────────────────────────────────────────────────────
+async function saveResult() {
+  if (!_lastResult) { showToast('Run evaluation first', 'error'); return; }
+  const sid  = document.getElementById('save_student_id').value.trim();
+  const time = parseInt(document.getElementById('save_time').value) || 0;
+  if (!sid) { showToast('Enter a Student ID to save', 'error'); return; }
+
+  const r = await api('/admin/quick-eval/save', {
+    passage_code: _passage.code,
+    typed_text:   document.getElementById('typed_text').value.trim(),
+    student_id:   sid,
+    time_taken:   time,
+  });
+
+  if (r.status === 'ok') {
+    showToast('✓ Saved to student records!');
+  } else {
+    showToast(r.message || 'Save failed', 'error');
+  }
+}
+</script>
+
+<script>
+// ── Interactive Annotation Editor ────────────────────────────────────────────
+// Wraps the annotated passage so every word/span is clickable.
+// Each <span class="highlight TYPE"> gets a click handler showing a dropdown.
+// Plain words get a click handler to mark them as a new mistake.
+// Live score is recalculated from DOM state on every change.
+
+(function() {
+
+const TYPES = [
+  { key: 'none',      label: '✓ No Mistake',     color: '' },
+  { key: 'full',      label: '✗ Full Mistake',    color: '#fee2e2' },
+  { key: 'half',      label: '~ Half Mistake',    color: '#fff7ed' },
+  { key: 'omission',  label: '[ ] Omission',      color: '#f3e8ff' },
+  { key: 'extra',     label: '+ Extra Word',       color: '#dbeafe' },
+  { key: 'capital',   label: 'Aa Capitalisation',  color: '#ecfdf5' },
+  { key: 'fullstop',  label: '. Full Stop',        color: '#fef9c3' },
+];
+
+const SCORES = { full:1, half:0.5, omission:1, extra:1, capital:0.5, fullstop:0.5, none:0 };
+
+let _popup = null;
+let _dirty = false;
+
+function closePopup() {
+  if (_popup) { _popup.remove(); _popup = null; }
+}
+
+function makePopup(el, currentType, onSelect) {
+  closePopup();
+  const rect = el.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.id = 'ann-popup';
+  pop.style.cssText = `
+    position:fixed;z-index:9999;background:var(--card-bg);
+    border:1px solid var(--card-border);border-radius:10px;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:200px;
+    font-family:'Source Sans 3',sans-serif;font-size:13px;overflow:hidden;
+  `;
+  // Position below the word
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  if (left + 210 > window.innerWidth) left = window.innerWidth - 220;
+  pop.style.top  = top + 'px';
+  pop.style.left = left + 'px';
+
+  pop.innerHTML = `
+    <div style="padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:1px;
+      color:var(--text-muted);border-bottom:1px solid var(--card-border);background:var(--table-stripe)">
+      MARK AS
+    </div>
+  `;
+  TYPES.forEach(t => {
+    const row = document.createElement('div');
+    const active = t.key === currentType;
+    row.style.cssText = `padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:9px;
+      background:${active ? 'var(--accent-light)' : 'transparent'};
+      color:${active ? 'var(--accent)' : 'var(--text)'};font-weight:${active?600:400};`;
+    row.onmouseenter = () => { if (!active) row.style.background='var(--table-stripe)'; };
+    row.onmouseleave = () => { if (!active) row.style.background='transparent'; };
+    if (t.color) {
+      const dot = document.createElement('span');
+      dot.style.cssText = `display:inline-block;width:10px;height:10px;border-radius:3px;
+        background:${t.color};flex-shrink:0`;
+      row.appendChild(dot);
+    } else {
+      const dot = document.createElement('span');
+      dot.style.cssText = `display:inline-block;width:10px;height:10px;border-radius:3px;
+        background:var(--success-light);border:1px solid var(--success);flex-shrink:0`;
+      row.appendChild(dot);
+    }
+    const lbl = document.createElement('span');
+    lbl.textContent = t.label;
+    row.appendChild(lbl);
+    row.onclick = (e) => { e.stopPropagation(); onSelect(t.key); closePopup(); };
+    pop.appendChild(row);
+  });
+
+  document.body.appendChild(pop);
+  _popup = pop;
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', closePopup, { once: true });
+  }, 0);
+}
+
+function applyType(el, newType) {
+  const word = el.dataset.word || el.textContent.replace(/\s*\(.*?\)\s*/g,'').trim();
+  const master = el.dataset.master || '';
+
+  el.className = newType === 'none' ? 'ann-word' : `highlight ${newType} ann-word`;
+  el.dataset.type = newType;
+
+  if (newType === 'none') {
+    el.textContent = word;
+    el.style.cursor = 'pointer';
+  } else if (newType === 'omission') {
+    el.innerHTML = `<em>[${master || word}]</em>`;
+  } else {
+    el.textContent = word;
+    if (master && master !== word) {
+      const em = document.createElement('em');
+      em.textContent = ` (${master})`;
+      el.appendChild(em);
+    }
+  }
+
+  _dirty = true;
+  recalcScores();
+  showSaveBanner();
+}
+
+function recalcScores() {
+  const counts = { full:0, half:0, omission:0, extra:0, capital:0, fullstop:0 };
+  document.querySelectorAll('#interactive-passage .ann-word').forEach(el => {
+    const t = el.dataset.type || 'none';
+    if (t !== 'none') counts[t] = (counts[t] || 0) + SCORES[t];
+  });
+
+  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  const wc = parseInt(document.getElementById('ann-wordcount')?.value || '100');
+  const pct = Math.round((total / wc) * 10000) / 100;
+
+  // Update live score display
+  const box = document.getElementById('live-score-box');
+  if (box) {
+    box.querySelector('#ls-full').textContent    = counts.full;
+    box.querySelector('#ls-half').textContent    = counts.half;
+    box.querySelector('#ls-omit').textContent    = counts.omission;
+    box.querySelector('#ls-extra').textContent   = counts.extra;
+    box.querySelector('#ls-cap').textContent     = counts.capital;
+    box.querySelector('#ls-fs').textContent      = counts.fullstop;
+    box.querySelector('#ls-total').textContent   = total;
+    box.querySelector('#ls-pct').textContent     = pct + '%';
+
+    const badge = box.querySelector('#ls-badge');
+    badge.textContent = pct <= 5 ? 'PASS' : pct <= 10 ? 'BORDERLINE' : 'FAIL';
+    badge.className = 'badge ' + (pct <= 5 ? 'badge-pass' : pct <= 10 ? 'badge-mid' : 'badge-fail');
+  }
+
+  return { counts, total, pct };
+}
+
+function showSaveBanner() {
+  let banner = document.getElementById('ann-save-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'ann-save-banner';
+    banner.style.cssText = `
+      position:sticky;bottom:16px;background:var(--accent);color:#fff;
+      border-radius:10px;padding:12px 20px;display:flex;align-items:center;
+      justify-content:space-between;gap:16px;box-shadow:0 4px 20px rgba(37,99,235,.4);
+      font-family:'Source Sans 3',sans-serif;font-size:14px;font-weight:600;
+      margin-top:16px;
+    `;
+    banner.innerHTML = `
+      <span>📝 You have unsaved annotation changes</span>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveAnnotation()" style="background:#fff;color:var(--accent);
+          border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-weight:700;font-size:13px">
+          💾 Save Changes
+        </button>
+        <button onclick="discardAnnotation()" style="background:rgba(255,255,255,.2);color:#fff;
+          border:1px solid rgba(255,255,255,.4);border-radius:6px;padding:7px 14px;cursor:pointer;font-size:13px">
+          Discard
+        </button>
+      </div>
+    `;
+    document.getElementById('interactive-passage').parentElement.appendChild(banner);
+  }
+}
+
+function initInteractivePassage() {
+  const container = document.getElementById('interactive-passage');
+  if (!container) return;
+
+  // Walk all child nodes and spans
+  // Replace each <span class="highlight TYPE"> with an annotatable span
+  // Replace each plain text node word with an annotatable span
+
+  const rawHTML = container.innerHTML;
+
+  // Parse into tokens: each word is a clickable unit
+  // We'll rebuild the innerHTML by wrapping each word
+  let html = container.innerHTML;
+
+  // First, mark each existing highlight span with data attributes
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  const rebuilt = [];
+
+  function processNode(node) {
+    if (node.nodeType === 3) {
+      // Text node — split into words
+      const parts = node.textContent.split(/(\s+)/);
+      parts.forEach(part => {
+        if (/^\s+$/.test(part)) {
+          rebuilt.push(part);
+        } else if (part.trim()) {
+          const word = part.trim();
+          rebuilt.push(`<span class="ann-word" data-type="none" data-word="${escHtml(word)}" data-master="${escHtml(word)}">${escHtml(word)}</span>`);
+        }
+      });
+    } else if (node.nodeType === 1) {
+      const el = node;
+      const cls = el.className || '';
+      const typeMatch = cls.match(/highlight\s+(\w+)/);
+      if (typeMatch) {
+        const type = typeMatch[1];
+        // Extract typed word (text before the <em> if any)
+        const em = el.querySelector('em');
+        let typedWord = el.textContent;
+        let masterWord = el.textContent;
+        if (em) {
+          // Remove em content to get typed word
+          typedWord = el.textContent.replace(em.textContent,'').trim();
+          // Master from em: "(master)" or "[master]"
+          masterWord = em.textContent.replace(/[\[\]\(\)]/g,'').trim();
+        }
+        rebuilt.push(`<span class="highlight ${type} ann-word" data-type="${type}" data-word="${escHtml(typedWord)}" data-master="${escHtml(masterWord)}">${el.innerHTML}</span>`);
+      } else {
+        // Non-highlight element — process children
+        rebuilt.push(`<${el.tagName.toLowerCase()}>`);
+        el.childNodes.forEach(processNode);
+        rebuilt.push(`</${el.tagName.toLowerCase()}>`);
+      }
+    }
+  }
+
+  tmp.childNodes.forEach(processNode);
+  container.innerHTML = rebuilt.join('');
+
+  // Add click listeners to all ann-word spans
+  container.addEventListener('click', (e) => {
+    const el = e.target.closest('.ann-word');
+    if (!el) return;
+    e.stopPropagation();
+    const currentType = el.dataset.type || 'none';
+    makePopup(el, currentType, (newType) => applyType(el, newType));
+  });
+
+  // Cursor style
+  container.querySelectorAll('.ann-word').forEach(el => {
+    el.style.cursor = 'pointer';
+  });
+
+  // Add edit mode indicator
+  const header = container.closest('.card')?.querySelector('.card-header');
+  if (header) {
+    const badge = document.createElement('span');
+    badge.style.cssText = 'font-size:11px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:6px;padding:2px 10px;font-weight:600';
+    badge.textContent = '✏️ Click any word to edit';
+    header.appendChild(badge);
+  }
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Global save function
+window.saveAnnotation = async function() {
+  const container = document.getElementById('interactive-passage');
+  if (!container) return;
+
+  // Rebuild highlighted HTML from current DOM state
+  const newHTML = container.innerHTML
+    .replace(/ style="cursor: pointer;"/g,'')
+    .replace(/ style="cursor:pointer;"/g,'');
+
+  const scores = recalcScores();
+  const attemptId = document.getElementById('ann-attempt-id')?.value;
+  const note = 'Manually corrected via annotation editor';
+
+  try {
+    const r = await fetch(`/admin/attempt/${attemptId}/annotate`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        highlighted_html: newHTML,
+        full:     scores.counts.full,
+        half:     scores.counts.half,
+        omission: scores.counts.omission,
+        extra:    scores.counts.extra,
+        capitalization: scores.counts.capital,
+        fullstop: scores.counts.fullstop,
+        note,
+      })
+    });
+    const data = await r.json();
+    if (data.status === 'ok') {
+      _dirty = false;
+      document.getElementById('ann-save-banner')?.remove();
+      if (window.showToast) showToast('✓ Annotation saved!');
+      else alert('Saved!');
+    } else {
+      alert('Save failed: ' + (data.message || 'Unknown error'));
+    }
+  } catch(e) {
+    alert('Error: ' + e);
+  }
+};
+
+window.discardAnnotation = function() {
+  _dirty = false;
+  document.getElementById('ann-save-banner')?.remove();
+  location.reload();
+};
+
+// Init on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initInteractivePassage);
+} else {
+  initInteractivePassage();
+}
+
+})();
+
+
+// Evaluate page: init annotation on the result div (no save needed here)
+function initEvalAnnotation() {
+  const container = document.getElementById('annotated_out');
+  if (!container || !container.innerHTML.trim()) return;
+  
+  // Re-use initInteractivePassage but target annotated_out
+  const saved = document.getElementById('interactive-passage');
+  // Temporarily rename
+  container.id = 'interactive-passage';
+  initInteractivePassage();
+  container.id = 'annotated_out';
+  
+  // Override save to update live scores panel on evaluate page
+  container.addEventListener('_recalc', () => {
+    const s = recalcScores();
+    document.getElementById('r_full').textContent  = s.counts.full;
+    document.getElementById('r_half').textContent  = s.counts.half;
+    document.getElementById('r_omit').textContent  = s.counts.omission;
+    document.getElementById('r_extra').textContent = s.counts.extra;
+    document.getElementById('r_pct').textContent   = s.pct + '%';
+    document.getElementById('r_total').textContent = s.total;
+  });
+}
+</script>
+
+</body>
+</html>

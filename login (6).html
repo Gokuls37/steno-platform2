@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Students</div>
+    <div class="stat-value accent">{{ total_students }}</div>
+    <div class="stat-sub">Registered</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Attempts</div>
+    <div class="stat-value">{{ total_attempts }}</div>
+    <div class="stat-sub">All time</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Active Passages</div>
+    <div class="stat-value">{{ active_passages }}</div>
+    <div class="stat-sub">Available now</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Avg Error %</div>
+    <div class="stat-value {% if avg_error <= 5 %}success{% elif avg_error <= 10 %}{% else %}danger{% endif %}">{{ avg_error }}%</div>
+    <div class="stat-sub">Across all tests</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Avg WPM</div>
+    <div class="stat-value">{{ avg_wpm }}</div>
+    <div class="stat-sub">Words per minute</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pass Rate</div>
+    <div class="stat-value {% if pass_rate >= 60 %}success{% elif pass_rate >= 30 %}{% else %}danger{% endif %}">{{ pass_rate }}%</div>
+    <div class="stat-sub">Error% ≤ 5</div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="two-col">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Attempts — Last 14 Days</div></div>
+    <div class="card-body"><div class="chart-wrap"><canvas id="dailyChart"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Error Type Distribution</div></div>
+    <div class="card-body"><div class="chart-wrap"><canvas id="errorChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- Leaderboard + Recent -->
+<div class="two-col">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">🏆 Leaderboard</div>
+      <span class="text-sm text-muted">Lowest avg error</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Student</th><th>Attempts</th>
+          <th>Avg Error%</th><th>Avg WPM</th><th>Best</th>
+        </tr></thead>
+        <tbody>
+        {% for s in leaderboard %}
+        <tr>
+          <td class="muted">{{ loop.index }}</td>
+          <td><a href="{{ url_for('admin.student_profile', student_id=s.id) }}">{{ s.name }}</a>
+            <div class="text-sm text-muted">{{ s.id }}</div></td>
+          <td>{{ s.attempts }}</td>
+          <td>
+            {% set e = s.avg_error %}
+            <span class="badge {% if e <= 5 %}badge-pass{% elif e <= 10 %}badge-mid{% else %}badge-fail{% endif %}">{{ e }}%</span>
+          </td>
+          <td>{{ s.avg_wpm }}</td>
+          <td class="text-sm muted">{{ s.best_error }}%</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="muted" style="text-align:center;padding:20px">No data yet</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Recent Attempts</div>
+      <a href="{{ url_for('admin.attempts_list') }}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Student</th><th>Passage</th><th>Error%</th><th>WPM</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for a in recent %}
+        <tr>
+          <td>{{ a._name }}<div class="text-sm text-muted">{{ a.Date[:10] if a.Date else '' }}</div></td>
+          <td class="muted">{{ a.PassageCode }}</td>
+          <td>
+            {% set e = a.ErrorPercent|float %}
+            <span class="badge {% if e <= 5 %}badge-pass{% elif e <= 10 %}badge-mid{% else %}badge-fail{% endif %}">{{ e }}%</span>
+          </td>
+          <td>{{ a.WPM }}</td>
+          <td><a href="{{ url_for('admin.attempt_detail', attempt_id=a.AttemptID) }}" class="btn btn-outline btn-sm">View</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="muted" style="text-align:center;padding:20px">No attempts yet</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const days   = {{ chart_days   | safe }};
+const counts = {{ chart_counts | safe }};
+const errD   = {{ error_dist   | safe }};
+
+const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+const gridColor  = () => isDark() ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+const tickColor  = () => isDark() ? 'rgba(255,255,255,.4)' : '#9ca3af';
+const accentColor= () => isDark() ? '#f0a500' : '#2563eb';
+
+// Daily chart
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+const dailyChart = new Chart(dailyCtx, {
+  type: 'bar',
+  data: {
+    labels: days,
+    datasets: [{
+      label: 'Attempts',
+      data: counts,
+      backgroundColor: accentColor() + '55',
+      borderColor: accentColor(),
+      borderWidth: 2,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: gridColor() }, ticks: { color: tickColor(), maxRotation: 45 } },
+      y: { grid: { color: gridColor() }, ticks: { color: tickColor(), stepSize: 1 } }
+    }
+  }
+});
+
+// Error distribution donut
+const errCtx = document.getElementById('errorChart').getContext('2d');
+new Chart(errCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Full', 'Half', 'Omission', 'Extra', 'Capitalisation', 'Full Stop'],
+    datasets: [{
+      data: [errD.full, errD.half, errD.omission, errD.extra, errD.cap, errD.fullstop],
+      backgroundColor: ['#ef4444','#f97316','#a855f7','#3b82f6','#10b981','#eab308'],
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right', labels: { color: tickColor(), font: { size: 11 }, boxWidth: 12 } }
+    }
+  }
+});
+</script>
+{% endblock %}

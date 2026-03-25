@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ student.StudentName or student.Name or student.StudentID }}{% endblock %}
+{% block page_title %}Student Profile{% endblock %}
+
+{% block content %}
+{% set name = student.StudentName or student.Name or student.StudentID %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ name }}</div>
+    <div class="text-muted text-sm mt-1">ID: {{ student.StudentID }} {% if student.Batch %}· Batch: {{ student.Batch }}{% endif %}</div>
+  </div>
+  <a href="{{ url_for('admin.students') }}" class="btn btn-outline">← Back</a>
+</div>
+
+<!-- Quick stats -->
+{% set total = attempts|length %}
+{% set errs = attempts | selectattr('ErrorPercent') | map(attribute='ErrorPercent') | list %}
+{% if total > 0 %}
+<div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
+  <div class="stat-card">
+    <div class="stat-label">Total Tests</div>
+    <div class="stat-value accent">{{ total }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Avg Error%</div>
+    {% set avg_e = (errs | map('float') | sum / total) | round(2) if total else 0 %}
+    <div class="stat-value {% if avg_e <= 5 %}success{% elif avg_e <= 10 %}{% else %}danger{% endif %}">{{ avg_e }}%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Best Error%</div>
+    {% set best = errs | map('float') | min if errs else 0 %}
+    <div class="stat-value success">{{ best | round(2) }}%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Avg WPM</div>
+    {% set wpms = attempts | map(attribute='WPM') | list %}
+    {% set avg_w = (wpms | map('float') | sum / total) | round(1) if total else 0 %}
+    <div class="stat-value">{{ avg_w }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pass Rate</div>
+    {% set passed = errs | map('float') | select('le', 5) | list | length %}
+    <div class="stat-value {% if (passed/total*100) >= 60 %}success{% else %}danger{% endif %}">
+      {{ (passed/total*100) | round(1) }}%
+    </div>
+    <div class="stat-sub">Error% ≤ 5</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Progress charts -->
+<div class="two-col">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Error% Over Time</div></div>
+    <div class="card-body"><div class="chart-wrap"><canvas id="errorChart"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">WPM Over Time</div></div>
+    <div class="card-body"><div class="chart-wrap"><canvas id="wpmChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- Attempts table -->
+<div class="card">
+  <div class="card-header"><div class="card-title">All Attempts</div></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Passage</th><th>WPM</th>
+        <th>Error%</th><th>Full</th><th>Half</th><th>Omission</th>
+        <th>Extra</th><th>Cap</th><th>Full Stop</th><th>Note</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for a in attempts %}
+      <tr>
+        <td class="muted text-sm">{{ a.Date[:16] if a.Date else '—' }}</td>
+        <td>{{ a.PassageCode }}</td>
+        <td><strong>{{ a.WPM }}</strong></td>
+        <td>
+          {% set e = a.ErrorPercent|float %}
+          <span class="badge {% if e <= 5 %}badge-pass{% elif e <= 10 %}badge-mid{% else %}badge-fail{% endif %}">{{ e }}%</span>
+        </td>
+        <td>{{ a.FullMistakes }}</td>
+        <td>{{ a.HalfMistakes }}</td>
+        <td>{{ a.Omissions }}</td>
+        <td>{{ a.ExtraWords }}</td>
+        <td>{{ a.Capitalization }}</td>
+        <td>{{ a.FullStop }}</td>
+        <td class="text-sm muted">{{ a.AdminNote or '' }}</td>
+        <td><a href="{{ url_for('admin.attempt_detail', attempt_id=a.AttemptID) }}" class="btn btn-outline btn-sm">Review</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="12" style="text-align:center;padding:24px" class="muted">No attempts yet</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const dates  = {{ progress_dates  | safe }};
+const errors = {{ progress_errors | safe }};
+const wpms   = {{ progress_wpm    | safe }};
+const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+const grid   = () => isDark() ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+const tick   = () => isDark() ? 'rgba(255,255,255,.4)'  : '#9ca3af';
+
+const opts = (label, color) => ({
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: grid() }, ticks: { color: tick(), maxRotation: 45 } },
+    y: { grid: { color: grid() }, ticks: { color: tick() } }
+  }
+});
+
+new Chart(document.getElementById('errorChart'), {
+  type: 'line',
+  data: { labels: dates, datasets: [{
+    label: 'Error%', data: errors,
+    borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.1)',
+    fill: true, tension: .3, pointRadius: 4,
+  }]},
+  options: opts('Error%', '#ef4444')
+});
+
+new Chart(document.getElementById('wpmChart'), {
+  type: 'line',
+  data: { labels: dates, datasets: [{
+    label: 'WPM', data: wpms,
+    borderColor: isDark() ? '#f0a500' : '#2563eb',
+    backgroundColor: isDark() ? 'rgba(240,165,0,.1)' : 'rgba(37,99,235,.08)',
+    fill: true, tension: .3, pointRadius: 4,
+  }]},
+  options: opts('WPM')
+});
+</script>
+{% endblock %}

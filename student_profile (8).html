@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Result — Steno Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Source+Sans+3:wght@300;400;600&family=Courier+Prime&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── LIGHT ───────────────────────────────── */
+  [data-theme="light"] {
+    --bg:            #f0f2f8;
+    --topbar-bg:     #ffffff;
+    --topbar-border: #e2e6f0;
+    --card-bg:       #ffffff;
+    --card-border:   #e2e6f0;
+    --card-header:   #f7f8fc;
+    --text:          #1a1f36;
+    --text-muted:    #6b7280;
+    --text-faint:    #9ca3af;
+    --accent:        #2563eb;
+    --accent-text:   #ffffff;
+    --val-color:     #1a1f36;
+    --highlight-val: #2563eb;
+    --shadow:        0 2px 16px rgba(0,0,0,.07);
+    --toggle-bg:     #f3f4f6;
+    --toggle-border: #d1d5e0;
+    --toggle-text:   #374151;
+    --passage-text:  #1a1f36;
+    --passage-bg:    #fafbfd;
+
+    /* Highlight colours — light mode */
+    --c-full-bg:    #fee2e2; --c-full-text:   #991b1b; --c-full-border:   #fca5a5;
+    --c-half-bg:    #fff7ed; --c-half-text:   #9a3412; --c-half-border:   #fdba74;
+    --c-omit-bg:    #f3e8ff; --c-omit-text:   #6b21a8; --c-omit-border:   #c084fc;
+    --c-extra-bg:   #dbeafe; --c-extra-text:  #1e40af; --c-extra-border:  #93c5fd;
+    --c-cap-bg:     #ecfdf5; --c-cap-text:    #065f46; --c-cap-border:    #6ee7b7;
+    --c-stop-bg:    #fef9c3; --c-stop-text:   #713f12; --c-stop-border:   #fde047;
+    --c-var-bg:     #f0fdf4; --c-var-text:    #166534; --c-var-border:    #86efac;
+  }
+
+  /* ── DARK ────────────────────────────────── */
+  [data-theme="dark"] {
+    --bg:            #0d1117;
+    --topbar-bg:     rgba(0,0,0,.4);
+    --topbar-border: rgba(255,255,255,.08);
+    --card-bg:       rgba(255,255,255,.04);
+    --card-border:   rgba(255,255,255,.09);
+    --card-header:   rgba(255,255,255,.03);
+    --text:          #f1f5f9;
+    --text-muted:    rgba(255,255,255,.45);
+    --text-faint:    rgba(255,255,255,.25);
+    --accent:        #f0a500;
+    --accent-text:   #0d1117;
+    --val-color:     #f1f5f9;
+    --highlight-val: #f0a500;
+    --shadow:        none;
+    --toggle-bg:     rgba(255,255,255,.08);
+    --toggle-border: rgba(255,255,255,.15);
+    --toggle-text:   #f1f5f9;
+    --passage-text:  rgba(255,255,255,.85);
+    --passage-bg:    transparent;
+
+    /* Highlight colours — dark mode */
+    --c-full-bg:    rgba(239,68,68,.18);  --c-full-text:  #fca5a5; --c-full-border:  rgba(239,68,68,.45);
+    --c-half-bg:    rgba(249,115,22,.18); --c-half-text:  #fdba74; --c-half-border:  rgba(249,115,22,.45);
+    --c-omit-bg:    rgba(168,85,247,.18); --c-omit-text:  #d8b4fe; --c-omit-border:  rgba(168,85,247,.45);
+    --c-extra-bg:   rgba(59,130,246,.18); --c-extra-text: #93c5fd; --c-extra-border: rgba(59,130,246,.45);
+    --c-cap-bg:     rgba(16,185,129,.18); --c-cap-text:   #6ee7b7; --c-cap-border:   rgba(16,185,129,.45);
+    --c-stop-bg:    rgba(234,179,8,.18);  --c-stop-text:  #fde047; --c-stop-border:  rgba(234,179,8,.45);
+    --c-var-bg:     rgba(34,197,94,.15);  --c-var-text:   #4ade80; --c-var-border:   rgba(34,197,94,.4);
+  }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background .3s, color .3s;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      none;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── TOPBAR ──────────────────────────────── */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 58px;
+    background: var(--topbar-bg);
+    border-bottom: 1px solid var(--topbar-border);
+    box-shadow: var(--shadow);
+    transition: background .3s, border-color .3s;
+  }
+
+  .brand {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+    transition: color .3s;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Big "New Test" button */
+  .new-test-btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent-text);
+    background: var(--accent);
+    text-decoration: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    transition: opacity .2s, background .3s, color .3s;
+    white-space: nowrap;
+  }
+
+  .new-test-btn:hover { opacity: .85; }
+
+  /* Theme toggle */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--toggle-bg);
+    border: 1px solid var(--toggle-border);
+    border-radius: 999px;
+    padding: 6px 14px 6px 10px;
+    cursor: pointer;
+    outline: none;
+    transition: background .3s, border-color .3s;
+  }
+
+  .theme-toggle:hover { opacity: .8; }
+
+  .theme-toggle svg {
+    width: 15px; height: 15px;
+    color: var(--toggle-text);
+    transition: color .3s;
+  }
+
+  .theme-toggle .lbl {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--toggle-text);
+    transition: color .3s;
+  }
+
+  /* ── PAGE ────────────────────────────────── */
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 36px 20px 60px;
+  }
+
+  .page-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+    margin-bottom: 4px;
+    transition: color .3s;
+  }
+
+  .page-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+    transition: color .3s;
+  }
+
+  /* ── SCORE CARDS ─────────────────────────── */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .score-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 16px 14px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: background .3s, border-color .3s;
+  }
+
+  .score-card.accent-card {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  .score-card label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    transition: color .3s;
+  }
+
+  .score-card .val {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--val-color);
+    line-height: 1;
+    transition: color .3s;
+  }
+
+  .score-card.accent-card .val { color: var(--highlight-val); }
+
+  /* ── SECTION ─────────────────────────────── */
+  .section {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    transition: background .3s, border-color .3s;
+  }
+
+  .section-header {
+    padding: 11px 20px;
+    background: var(--card-header);
+    border-bottom: 1px solid var(--card-border);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    transition: background .3s, border-color .3s, color .3s;
+  }
+
+  .section-body { padding: 20px; }
+
+  /* ── LEGEND ──────────────────────────────── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  /* ── HIGHLIGHT SPANS ─────────────────────── */
+  .highlight {
+    display: inline;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: .93em;
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  /* Full mistake — RED */
+  .full     { background: var(--c-full-bg);  color: var(--c-full-text);  border-color: var(--c-full-border); }
+  /* Spelling/Half — ORANGE */
+  .half     { background: var(--c-half-bg);  color: var(--c-half-text);  border-color: var(--c-half-border); }
+  /* Omission — PURPLE */
+  .omission { background: var(--c-omit-bg);  color: var(--c-omit-text);  border-color: var(--c-omit-border); font-style: italic; }
+  /* Extra — BLUE */
+  .extra    { background: var(--c-extra-bg); color: var(--c-extra-text); border-color: var(--c-extra-border); }
+  /* Capitalisation — GREEN (clearly different from all above) */
+  .capital  { background: var(--c-cap-bg);   color: var(--c-cap-text);   border-color: var(--c-cap-border); }
+  /* Full stop — YELLOW */
+  .fullstop { background: var(--c-stop-bg);  color: var(--c-stop-text);  border-color: var(--c-stop-border); }
+  /* Accepted Variant — TEAL/GREEN (no penalty) */
+  .variant  { background: var(--c-var-bg);   color: var(--c-var-text);   border-color: var(--c-var-border); font-style: italic; }
+
+  /* ── PASSAGE ─────────────────────────────── */
+  .passage-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: 15px;
+    line-height: 2.1;
+    color: var(--passage-text);
+    word-break: break-word;
+    transition: color .3s;
+  }
+
+  .hint-text {
+    font-size: 12px;
+    color: var(--text-faint);
+    transition: color .3s;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ─────────────────────────────── -->
+<div class="topbar">
+  <div class="brand">Steno &nbsp;·&nbsp; SKILL TEST</div>
+  <div class="topbar-right">
+
+    <a class="new-test-btn" href="/">&#8592; New Test</a>
+
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1"  x2="12" y2="3"/>  <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>   <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <span class="lbl" id="themeLabel">Dark</span>
+    </button>
+
+  </div>
+</div>
+
+<!-- ── PAGE ──────────────────────────────── -->
+<div class="page">
+
+  <div class="page-title">Transcription Result</div>
+  <div class="page-sub">Test completed — full evaluation below</div>
+
+  <!-- SCORE CARDS -->
+  <div class="score-grid">
+    <div class="score-card accent-card">
+      <label>WPM</label>
+      <div class="val">{{ result.wpm }}</div>
+    </div>
+    <div class="score-card">
+      <label>Total Errors</label>
+      <div class="val">{{ result.total_errors }}</div>
+    </div>
+    <div class="score-card {% if result.error_percent <= 5 %}accent-card{% endif %}">
+      <label>Error %</label>
+      <div class="val">{{ result.error_percent }}%</div>
+    </div>
+    <div class="score-card">
+      <label>Full Mistakes</label>
+      <div class="val">{{ result.full }}</div>
+    </div>
+    <div class="score-card">
+      <label>Half Mistakes</label>
+      <div class="val">{{ result.half }}</div>
+    </div>
+    <div class="score-card">
+      <label>Omissions</label>
+      <div class="val">{{ result.omission }}</div>
+    </div>
+    <div class="score-card">
+      <label>Extra Words</label>
+      <div class="val">{{ result.extra }}</div>
+    </div>
+    <div class="score-card">
+      <label>Capitalisation</label>
+      <div class="val">{{ result.capitalization }}</div>
+    </div>
+    <div class="score-card">
+      <label>Full Stop</label>
+      <div class="val">{{ result.fullstop }}</div>
+    </div>
+  </div>
+
+  <!-- COLOUR LEGEND -->
+  <div class="section">
+    <div class="section-header">Colour Guide</div>
+    <div class="section-body">
+      <div class="legend">
+        <span class="highlight full">Full Mistake</span>
+        <span class="highlight half">Spelling / Half Mistake</span>
+        <span class="highlight omission">[Omission]</span>
+        <span class="highlight extra">Extra Word</span>
+        <span class="highlight capital">Capitalisation</span>
+        <span class="highlight fullstop">Full Stop</span>
+        <span class="highlight variant">Accepted Variant ✓</span>
+      </div>
+      <p class="hint-text">
+        Words in <em>( )</em> show the correct master word.&nbsp;
+        Words in <em>[ ]</em> were omitted.&nbsp;
+        Other punctuation (commas, colons, etc.) is ignored. Accepted variants (e.g. Hon. / Honourable) are shown in teal — no penalty.
+      </p>
+    </div>
+  </div>
+
+  <!-- ANNOTATED PASSAGE -->
+  <div class="section">
+    <div class="section-header">Annotated Passage</div>
+    <div class="section-body">
+      <div class="passage-text">{{ highlighted|safe }}</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const html       = document.documentElement;
+  const iconSun    = document.getElementById("iconSun");
+  const iconMoon   = document.getElementById("iconMoon");
+  const themeLabel = document.getElementById("themeLabel");
+
+  applyTheme(localStorage.getItem("ssc-theme") || "light");
+
+  function applyTheme(theme) {
+    html.setAttribute("data-theme", theme);
+    localStorage.setItem("ssc-theme", theme);
+    const dark = theme === "dark";
+    iconSun.style.display  = dark ? "block" : "none";
+    iconMoon.style.display = dark ? "none"  : "block";
+    themeLabel.textContent = dark ? "Light" : "Dark";
+  }
+
+  function toggleTheme() {
+    applyTheme(html.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  }
+</script>
+
+</body>
+</html>

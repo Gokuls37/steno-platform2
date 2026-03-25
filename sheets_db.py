@@ -1,0 +1,3 @@
+flask>=2.3
+gspread>=6.0
+google-auth>=2.0

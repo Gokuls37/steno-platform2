@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Attempts{% endblock %}
+{% block page_title %}All Attempts{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">All Attempts <span class="text-muted text-sm" style="font-weight:400">({{ attempts|length }})</span></div>
+</div>
+
+<!-- Filters -->
+<div class="card" style="margin-bottom:16px">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div>
+        <label class="form-label">STUDENT ID</label>
+        <input type="text" name="student" class="form-control form-control-sm" value="{{ filter_sid }}" placeholder="e.g. STN001" style="width:140px">
+      </div>
+      <div>
+        <label class="form-label">PASSAGE CODE</label>
+        <input type="text" name="passage" class="form-control form-control-sm" value="{{ filter_code }}" placeholder="e.g. KC001" style="width:120px">
+      </div>
+      <div>
+        <label class="form-label">DATE</label>
+        <input type="date" name="date" class="form-control form-control-sm" value="{{ filter_date }}" style="width:150px">
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      <a href="{{ url_for('admin.attempts_list') }}" class="btn btn-outline btn-sm">Clear</a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Student</th><th>Passage</th>
+        <th>WPM</th><th>Error%</th><th>Full</th><th>Half</th>
+        <th>Omit</th><th>Extra</th><th>Note</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for a in attempts %}
+      <tr>
+        <td class="muted text-sm">{{ a.Date[:16] if a.Date else '—' }}</td>
+        <td>
+          <a href="{{ url_for('admin.student_profile', student_id=a.StudentID) }}">{{ a._name }}</a>
+          <div class="text-sm muted">{{ a.StudentID }}</div>
+        </td>
+        <td class="muted">{{ a.PassageCode }}</td>
+        <td><strong>{{ a.WPM }}</strong></td>
+        <td>
+          {% set e = a.ErrorPercent|float %}
+          <span class="badge {% if e <= 5 %}badge-pass{% elif e <= 10 %}badge-mid{% else %}badge-fail{% endif %}">{{ e }}%</span>
+        </td>
+        <td>{{ a.FullMistakes }}</td>
+        <td>{{ a.HalfMistakes }}</td>
+        <td>{{ a.Omissions }}</td>
+        <td>{{ a.ExtraWords }}</td>
+        <td class="text-sm muted">{{ a.AdminNote or '' }}</td>
+        <td><a href="{{ url_for('admin.attempt_detail', attempt_id=a.AttemptID) }}" class="btn btn-outline btn-sm">Review</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="11" style="text-align:center;padding:24px" class="muted">No attempts found</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
